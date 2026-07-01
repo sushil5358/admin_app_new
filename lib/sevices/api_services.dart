@@ -2,6 +2,7 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'dart:typed_data';
 
 
 class ApiService {
@@ -61,7 +62,8 @@ class ApiService {
 
 
   // String url = "https://test.sunnovativecrm.com/service/";
-  String url = "http://192.168.1.8:5000/api/";
+  // String url = "http://192.168.1.14:5000/api/";
+  String url = "https://solarkits-erp-backend.onrender.com/api/";
   String key = "1226";
 
   Map<String,String> head =  {
@@ -323,7 +325,7 @@ class ApiService {
     final uri = Uri.parse(url + 'survey/save-building');
     final response = await http.post(
       uri,
-      headers: head,
+      headers: head, // make sure this includes 'Content-Type: application/json'
       body: jsonEncode(surveyData),
     );
     return response;
@@ -670,6 +672,16 @@ class ApiService {
 
   }
 
+  Future<http.Response> deleteSurveyQuote(String quoteId)async {
+    http.Response response;
+    final uri = Uri.parse(url + 'survey-quick-quote/$quoteId');
+    print('deleteSurveyQuote ==  $uri');
+    response = await http.delete(uri);
+    return response;
+
+  }
+
+
 
   Future<http.Response> getQuoteById(String quoteId)async {
     http.Response response;
@@ -792,18 +804,6 @@ class ApiService {
   }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
   Future<http.Response> getSolarBrands()async{
     http.Response response;
     final uri = Uri.parse(url + 'brand/manufacturer');
@@ -853,6 +853,167 @@ class ApiService {
     response = await http.get(uri);
     return response;
   }
+
+  Future<http.Response> getAMCPlans(String addOnPlanId)async{
+    http.Response response;
+    final uri = Uri.parse(url + 'combokit/amc-plans/$addOnPlanId/services');
+    print('getSolarPanelWatt == $uri');
+    response = await http.get(uri);
+    return response;
+  }
+
+
+  // getAddonPlans
+  Future<http.Response> getAddOnPlans(String category,String subCategory,String projectType,String subprojectType)async{
+    http.Response response;
+    final uri = Uri.parse(url + 'combokit/amc-plans?category=$category&subCategory=$subCategory&projectType=$projectType&subProjectType=$subprojectType');
+    print('getAddOnPlans == $uri');
+    response = await http.get(uri);
+    return response;
+  }
+
+  Future<http.Response> getBomItemList(String surveyId)async{
+    http.Response response;
+    final uri = Uri.parse(url + 'quote-settings/survey-bom/kits/$surveyId');
+    print('getBomItemList == $uri');
+    response = await http.get(uri);
+    return response;
+  }
+
+  Future<http.Response> getACDCWirePrice(String surveyId)async{
+    http.Response response;
+    final uri = Uri.parse('${url}quote-settings/wire-price/$surveyId');
+    print('getACDCWirePrice == $uri');
+    response = await http.get(uri);
+    return response;
+  }
+
+  Future<http.Response> addSurveyQuotation({
+    required String surveyId,
+    required String quoteId,
+    required String userId,
+    required String name,
+    required String number,
+    required String kitType,
+    required String fileType,
+    required String loanType,
+    required String districtId,
+    required String categoryId,
+    required String subCategoryId,
+    required String projectTypeId,
+    required String subProjectTypeID,
+    required String brandId,
+    required String technologyId,
+    required String panelWattId,
+    required String noOfPanels,
+    required String kilowattId,
+    required String comboKitId,
+    required String addonPlanId,
+    required String amcPlanId,
+    required String panelId,
+    required String inverterId,
+    required String bosKitId,
+    required String terraceTypeId,
+    required String strutureCharges,
+    required String installationCharges,
+    required String myMargin,
+    required String discount,
+    required String subTotal,
+    required String gst,
+    required String roundOff,
+    required String grandTotal,
+    required String scheduleDate,
+    required String timeSlot,
+    required String remark,
+    required int acWire,
+    required int dcWire,
+    required List bomList
+  }) async{
+
+    http.Response response;
+    final uri = Uri.parse(url + 'survey-quick-quote');
+    print('addQuotation == $uri');
+    response = await http.post(
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
+        uri,
+        body: jsonEncode({
+          "surveyId" : surveyId,
+          "_id" : quoteId,
+          "userId" : userId,
+          "name": name,
+          "phoneNumber": number,
+          "kitType": kitType,
+          "solarPanel": panelId,
+          "solarInverter": inverterId,
+          "bosKit": bosKitId,
+          "district": districtId,
+          "category": categoryId,
+          "subCategory": subCategoryId,
+          "projectType": projectTypeId,
+          "subProjectType": subProjectTypeID,
+          "brand": brandId,
+          "technology": technologyId,
+          "solarPanelWatt": panelWattId,
+          "numberOfSolarPanel": noOfPanels,
+          "kilowatt": kilowattId,
+          "comboKitId" : comboKitId,
+          "terraceType": terraceTypeId,
+          "amcPlanId": addonPlanId, // AMC Plan ObjectId (e.g. "69b4fa03249b51bb5d13a0b7")
+          "services": amcPlanId, // Array of AMC Service ObjectIds (e.g. ["69b4f910249b51bb5d13a0a5"])
+          "paymentType": fileType,
+          "loanType": loanType,
+          "channelPartnerCharge": '',
+          "structureCharge": strutureCharges,
+          "installationCharge": installationCharges,
+          "agentMarginCommission": myMargin,
+          "companyMargin": '',
+          "discount": discount,
+          "subTotal": subTotal,
+          "gst": gst,
+          "roundOff" : roundOff,
+          "grandTotal": grandTotal,
+          "date": scheduleDate,
+          "time": timeSlot,
+          "remark": remark,
+          "acWire": acWire,
+          "dcWire": dcWire,
+          "bomList": bomList,
+        })
+
+    );
+    return response;
+
+
+  }
+
+  Future<http.Response> getSurveyQuoteById(String quoteId)async {
+    http.Response response;
+    final uri = Uri.parse(url + 'survey-quick-quote/$quoteId');
+    print('getSurveyQuoteById ==  $uri');
+    response = await http.get(uri);
+    return response;
+
+  }
+
+  Future<http.Response> getSurveyQuote(String userId,String districtIds,String categoryId,String subCategoryIds,String projectTypeIds,String SubProjectTypeIds)async{
+    http.Response response;
+    final uri = Uri.parse(url + 'survey-quick-quote?userId=$userId&district=$districtIds&category=$categoryId&subCategory=$subCategoryIds&projectType=$projectTypeIds&subProjectType=$SubProjectTypeIds');
+    print('getSurveyQuote == $uri');
+    response = await http.get(uri);
+    return response;
+  }
+
+
+
+
+
+
+
+
+
 
 
 

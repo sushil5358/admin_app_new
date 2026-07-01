@@ -4532,6 +4532,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -4540,6 +4541,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import '../custome_snackbar.dart';
 import '../models/comanItem_model.dart';
+import '../screens/all_quotes/add_surveyQuotation.dart';
 import '../sevices/api_services.dart';
 
 class Walkway {
@@ -6100,7 +6102,16 @@ class UnifiedSurveyController extends GetxController {
 
   // ==================== API INTEGRATION FOR COMPLETE SURVEY ====================
 
-  Future<void> completeSurvey() async {
+  Future<void> completeSurvey([Uint8List? screenshot]) async {
+
+    String? imageBase64;
+    if (screenshot != null) {
+      imageBase64 = base64Encode(screenshot.toList());
+      print('Image size: ${screenshot.length} bytes, Base64 length: ${imageBase64.length}');
+    }
+
+
+
     if (currentBuilding == null) {
       Get.snackbar('Error', 'No building selected');
       return;
@@ -6174,6 +6185,7 @@ class UnifiedSurveyController extends GetxController {
       'dcWire_meter': building.dcWire_meter,
       'acWire_meter': building.acWire_meter,
       'totalKg': building.totalKg,
+      'image' : imageBase64 ?? '',
     };
 
     isLoading.value = true;
@@ -6189,28 +6201,26 @@ class UnifiedSurveyController extends GetxController {
           if (index != -1) {
             buildings[index] = buildings[index].copyWith(isSaved: true);
           }
+          String surveyId = jsonResponse['buildingId'].toString();
           isSaved.value = true;
           showCustomSnackBar(Get.context!, message: jsonResponse['message'] ?? 'Survey completed and saved!', backgroundColor: Colors.green);
-          // Get.to(() => AddQuoteScreenForSurvey(
-          //   surveyId: '',
-          //   quoteId: '', // empty as requested
-          //   cname: building.customerName,
-          //   cnumber: building.customerMobile,
-          //   district: selectedDistrict.value,
-          //   category: selectedCategoryId.value,
-          //   subCategory: selectedSubCategoryId.value,
-          //   projectType: selectedProjectTypeId.value,
-          //   subProjectType: selectedSubprojectTypeId.value,
-          //   brand: selectedBrand.value,
-          //   technology: selectedTechnologyId.value,
-          //   panelWatt: selectedPanelWattId.value,
-          //   noOfSolarPanel: selectedNoOfPanels.value,
-          //   kilowatt: selectedKilowattId.value,
-          //   terraceTypeId: selectedTerraceTypeId.value,
-          //
-          //
-          //
-          // ));
+          Get.to(() => AddSurveyQuotation(
+            surveyId: surveyId,
+            quoteId: '',
+            cname: building.customerName,
+            cnumber: building.customerMobile,
+            district: selectedDistrict.value,
+            category: selectedCategoryId.value,
+            subCategory: selectedSubCategoryId.value,
+            projectType: selectedProjectTypeId.value,
+            subProjectType: selectedSubprojectTypeId.value,
+            brand: selectedBrand.value,
+            technology: selectedTechnologyId.value,
+            panelWatt: selectedPanelWattId.value,
+            noOfSolarPanel: selectedNoOfPanels.value,
+            kilowatt: selectedKilowattId.value,
+            terraceTypeId: selectedTerraceTypeId.value,
+          ));
 
         } else {
           showCustomSnackBar(Get.context!, message: jsonResponse['message'] ?? 'Failed to save survey', backgroundColor: Colors.red);
@@ -6399,6 +6409,8 @@ class UnifiedSurveyController extends GetxController {
     if (jsonResponse['success'] == true) {
       List<dynamic> data = jsonResponse['data'];
       kilowattList.value = data.map((item) => CommonItemModel.fromJson(item)).toList();
+      selectedKilowattId.value = kilowattList.first.id;
+      selectedKilowatt.value = kilowattList.first.name;
     } else {
       showCustomSnackBar(Get.context!, message: jsonResponse['message'], backgroundColor: Colors.red);
     }

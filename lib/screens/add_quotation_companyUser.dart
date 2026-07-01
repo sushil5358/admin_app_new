@@ -1254,9 +1254,6 @@ class AddQuoteScreen extends StatefulWidget {
 class _AddQuoteScreenState extends State<AddQuoteScreen> {
   late AddQuotationCompanyuserController controller;
 
-
-
-
   final List<String> timeSlots = [
     '8 AM - 10 AM',
     '10 AM - 12 PM',

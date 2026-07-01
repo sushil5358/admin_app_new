@@ -1,25 +1,21 @@
 // lib/view/quotations_screen.dart - Admin Version (Using Your AppColors)
 import 'package:admin_app_new/screens/all_quotes/quick_quote_admin.dart';
 import 'package:admin_app_new/screens/all_quotes/survey_quote_admin.dart';
-import 'package:admin_app_new/screens/solarkit_dashbord.dart';
+
 import 'package:admin_app_new/screens/unfied_map.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_instance/src/extension_instance.dart';
-import 'package:get/get_navigation/src/extension_navigation.dart';
+
 import 'package:get/get_rx/src/rx_types/rx_types.dart';
 import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
 import 'package:multi_select_flutter/dialog/multi_select_dialog_field.dart';
 import 'package:multi_select_flutter/util/multi_select_item.dart';
-
-
 import '../../appColors.dart';
-import '../../constants.dart';
-
 import '../../controller/admin_quotes_controller.dart';
 import '../../models/comanItem_model.dart';
 import '../add_quotation_companyUser.dart';
-import '../dashbord_screen.dart';
+
 
 class QuotesManagementScreen extends StatefulWidget {
   const QuotesManagementScreen({super.key});
@@ -31,9 +27,6 @@ class QuotesManagementScreen extends StatefulWidget {
 class _QuotesManagementScreenState extends State<QuotesManagementScreen> with SingleTickerProviderStateMixin {
   AdminQuotesController controller = Get.put(AdminQuotesController());
   late TabController _tabController;
-
-
-
 
 
   final ScrollController _scrollController = ScrollController();
@@ -405,6 +398,7 @@ class _QuotesManagementScreenState extends State<QuotesManagementScreen> with Si
                             controller.selectedProjectTypeIds.value = '';
                             controller.selectedSubPorjectTypeIds.value = '';
                             controller.getQuickQuote();
+                            controller.getSurveyQuote();
                             Navigator.pop(context);
                           },
                           style: OutlinedButton.styleFrom(
@@ -423,6 +417,7 @@ class _QuotesManagementScreenState extends State<QuotesManagementScreen> with Si
                         child: ElevatedButton(
                           onPressed: () {
                             controller.getQuickQuote();
+                            controller.getSurveyQuote();
                             Navigator.pop(context);
                           },
                           style: ElevatedButton.styleFrom(

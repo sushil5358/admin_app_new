@@ -3273,15 +3273,19 @@
 
 
 
+import 'dart:typed_data';
+import 'dart:ui' as ui;
 import 'package:admin_app_new/custome_snackbar.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart' hide Uint8List, ByteData;
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../controller/unfied_map_controller.dart';
 import '../appColors.dart';
 import '../models/comanItem_model.dart';
+import 'package:image/image.dart' as img;
 
 class UnifiedSurveyScreen extends StatefulWidget {
   final String? willQuote;
@@ -3313,6 +3317,8 @@ class _UnifiedSurveyScreenState extends State<UnifiedSurveyScreen> {
   String _tempPanelWatt = "545";
   String _tempKilowatt = "";
   int _tempPanelCount = 0;
+
+  final GlobalKey _screenshotKey = GlobalKey();
 
   @override
   Widget build(BuildContext context) {
@@ -3443,7 +3449,10 @@ class _UnifiedSurveyScreenState extends State<UnifiedSurveyScreen> {
               color: Colors.white,
             ),
             onPressed: canComplete
-                ? () => controller.completeSurvey()
+                ? () async{
+              final screenshot = await _captureScreenshot();
+                  controller.completeSurvey(screenshot);
+                }
                 : null,
             tooltip: controller.isSaved.value ? 'Survey Completed' : 'Complete Survey',
           );
@@ -3464,47 +3473,68 @@ class _UnifiedSurveyScreenState extends State<UnifiedSurveyScreen> {
         : _buildMapView());
   }
 
+
+
+
+  Future<Uint8List?> _captureScreenshot() async {
+    try {
+      final boundary = _screenshotKey.currentContext!
+          .findRenderObject() as RenderRepaintBoundary;
+
+      // Lower resolution reduces PNG size drastically
+      final ui.Image image = await boundary.toImage(pixelRatio: 0.5);
+      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      return byteData?.buffer.asUint8List();
+    } catch (e) {
+      print('Screenshot capture failed: $e');
+      return null;
+    }
+  }
+
   Widget _buildMapView() {
     return Column(
       children: [
         Expanded(
-          child: Stack(
-            children: [
-              GoogleMap(
-                zoomGesturesEnabled: true,
-                zoomControlsEnabled: false,
-                mapType: MapType.satellite,
-                initialCameraPosition: CameraPosition(target: controller.pickedLocation.value, zoom: 18),
-                onMapCreated: (mapCtrl) => controller.mapController = mapCtrl,
-                onTap: (argument) {
-                  if (controller.isDrawingHandRail.value) {
-                    // Hand rail drawing logic if needed
-                  } else if (controller.isSelectingArea.value && controller.isDrawingTerrace.value) {
-                    controller.addPolygonPoint(argument);
-                  }
-                  controller.pickedLocation.value = argument;
-                },
-                markers: _buildMarkers(),
-                polygons: _buildPolygons(),
-                polylines: _buildPolylines(),
-              ),
-              if (controller.isSelectingArea.value && controller.isDrawingTerrace.value) _buildDrawingControls(),
-              if (controller.isSelectingArea.value && controller.isEditingTerrace.value) _buildTerraceEditControls(),
-              if (controller.hasPanels.value && !controller.isSaved.value && controller.currentBuilding != null) _buildSaveEditControls(),
-              if (controller.hasPanels.value && controller.isSaved.value && controller.currentBuilding != null && !controller.isSelectingArea.value && !controller.isEditingTerrace.value) _buildSavedEditControls(),
-              // Panel edit card (top-right)
-              Positioned(
-                top: 10,
-                right: 10,
-                child: Obx(() => controller.isEditingTerraceLayout.value ? _buildEditCard() : const SizedBox()),
-              ),
-              // Walkway edit card (top-left)
-              Positioned(
-                top: 10,
-                left: 10,
-                child: Obx(() => controller.isEditingTerraceLayout.value && controller.isEditingWalkway.value ? _buildWalkwayEditCard() : const SizedBox()),
-              ),
-            ],
+          child: RepaintBoundary(
+            key: _screenshotKey,
+            child: Stack(
+              children: [
+                GoogleMap(
+                  zoomGesturesEnabled: true,
+                  zoomControlsEnabled: false,
+                  mapType: MapType.satellite,
+                  initialCameraPosition: CameraPosition(target: controller.pickedLocation.value, zoom: 18),
+                  onMapCreated: (mapCtrl) => controller.mapController = mapCtrl,
+                  onTap: (argument) {
+                    if (controller.isDrawingHandRail.value) {
+                      // Hand rail drawing logic if needed
+                    } else if (controller.isSelectingArea.value && controller.isDrawingTerrace.value) {
+                      controller.addPolygonPoint(argument);
+                    }
+                    controller.pickedLocation.value = argument;
+                  },
+                  markers: _buildMarkers(),
+                  polygons: _buildPolygons(),
+                  polylines: _buildPolylines(),
+                ),
+                if (controller.isSelectingArea.value && controller.isDrawingTerrace.value) _buildDrawingControls(),
+                if (controller.isSelectingArea.value && controller.isEditingTerrace.value) _buildTerraceEditControls(),
+                if (controller.hasPanels.value && !controller.isSaved.value && controller.currentBuilding != null) _buildSaveEditControls(),
+                if (controller.hasPanels.value && controller.isSaved.value && controller.currentBuilding != null && !controller.isSelectingArea.value && !controller.isEditingTerrace.value) _buildSavedEditControls(),
+                // Panel edit card (top-right)
+                Positioned(
+                  top: 10,
+                  right: 10,
+                  child: Obx(() => controller.isEditingTerraceLayout.value ? _buildEditCard() : const SizedBox()),
+                ),
+                // Walkway edit card (top-left)
+                Positioned(
+                  top: 10,
+                  left: 10,
+                  child: Obx(() => controller.isEditingTerraceLayout.value && controller.isEditingWalkway.value ? _buildWalkwayEditCard() : const SizedBox()),
+                ),
+              ],
+            ),
           ),
         ),
       ],
@@ -4385,7 +4415,12 @@ class _UnifiedSurveyScreenState extends State<UnifiedSurveyScreen> {
                     }),
                     const SizedBox(height: 12),
                     Obx(() {
+                      CommonItemModel? selected = controller.kilowattList.firstWhereOrNull((element) {
+                        return element.id == controller.selectedKilowattId.value;
+                      },);
+
                       return DropdownButtonFormField<CommonItemModel>(
+                        initialValue: selected,
                         decoration: const InputDecoration(labelText: "Select Kilowatt", border: OutlineInputBorder()),
                         items: controller.kilowattList.map((kw) => DropdownMenuItem(value: kw, child: Text(kw.name))).toList(),
                         onChanged: (value) {
